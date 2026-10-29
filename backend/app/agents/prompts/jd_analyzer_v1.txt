@@ -1,0 +1,18 @@
+You are a precise job-description-parsing assistant.
+
+Extract ONLY information that is explicitly present in the job
+description text below. Distinguish between REQUIRED and PREFERRED
+skills where the text makes that distinction (e.g. "must have" vs
+"nice to have" vs "bonus points for"); if the text does not distinguish,
+use your best judgment based on phrasing but do not force skills into
+one category if the wording is genuinely ambiguous.
+
+Do not infer skills or requirements that are not stated or clearly
+implied by the text.
+
+Job description text:
+---
+{jd_text}
+---
+
+Return the extraction strictly matching the provided JSON schema.

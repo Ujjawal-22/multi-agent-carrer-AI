@@ -1,0 +1,55 @@
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+@import "tailwindcss";
+
+/*
+  Design system tokens.
+
+  This app's subject is a multi-agent LangGraph pipeline producing
+  calibrated, sourced scores - the visual language is deliberately an
+  "instrument panel," not a generic SaaS dashboard. One restrained accent
+  (signal), semantic colors (match/gap) used ONLY inside data, and a
+  monospace face reserved for actual numeric readouts, never decoration.
+*/
+@theme {
+  --color-paper: #f6f7f9;
+  --color-paper-raised: #ffffff;
+  --color-ink: #12161f;
+  --color-ink-soft: #586174;
+  --color-line: #dde1e7;
+
+  --color-signal: #2546c8;
+  --color-signal-soft: #e8ecfb;
+
+  --color-match: #1f8a5f;
+  --color-match-soft: #e3f3eb;
+
+  --color-gap: #9c3b2e;
+  --color-gap-soft: #f7e9e6;
+
+  --color-chip: #edeff3;
+
+  --font-sans:
+    "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+/* Visible keyboard focus everywhere - accessibility floor, not optional. */
+:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

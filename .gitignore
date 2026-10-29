@@ -1,0 +1,42 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+my_env/
+*.pyc
+
+# --- Environment / secrets ---
+.env
+.env.*
+!.env.example
+
+# --- IDE ---
+.vscode/
+.idea/
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- User data: never commit real resumes or job descriptions (PII) ---
+data/resumes/*
+!data/resumes/.gitkeep
+data/job_descriptions/*
+!data/job_descriptions/.gitkeep
+
+# --- Docker ---
+docker-compose.override.yml
+
+# --- Logs ---
+*.log
+
+# --- Frontend (added in Phase 5) ---
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+*.tsbuildinfo
+
+# --- Evaluation outputs ---
+evaluation/results/*.json

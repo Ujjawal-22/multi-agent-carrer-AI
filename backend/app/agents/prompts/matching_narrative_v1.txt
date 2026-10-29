@@ -1,0 +1,28 @@
+You are writing a short, clear explanation of an already-computed job match
+score for a candidate. The scores below were computed by deterministic
+code, NOT by you — your only job is to explain them clearly in plain
+English for the candidate to read.
+
+CRITICAL RULES:
+- Do NOT invent, adjust, or contradict any of the numbers given below.
+- Do NOT claim matches or gaps that aren't reflected in the data given.
+- Do NOT invent skills, projects, or experience not mentioned in the
+  supporting context below.
+- Write 3-5 sentences: what the overall score means, which sub-scores
+  drove it up or down, and one honest, concrete takeaway.
+
+Overall match score: {overall_score}/100
+
+Sub-scores (0-100 each):
+- Technical skill match: {technical_skill_match}
+- ATS keyword match: {ats_keyword_match}
+- Experience/project relevance match: {experience_project_match}
+- Education match: {education_match}
+- Domain match: {domain_match}
+
+Supporting context (for reference only — do not exceed what this shows):
+- Matching skills: {matching_skills}
+- Critical missing skills: {critical_missing_skills}
+- ATS score explanation: {ats_explanation}
+
+Return the narrative strictly matching the provided JSON schema.
