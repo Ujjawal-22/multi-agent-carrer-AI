@@ -14,7 +14,10 @@ from app.rag.schemas import KnowledgeChunk
 logger = logging.getLogger(__name__)
 _settings = get_settings()
 
-_client = QdrantClient(url=_settings.QDRANT_URL)
+_client = QdrantClient(
+    url=_settings.QDRANT_URL,
+    api_key=_settings.QDRANT_API_KEY or None,
+)
 
 
 def ensure_collection() -> None:

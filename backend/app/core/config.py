@@ -48,6 +48,7 @@ class Settings(BaseSettings):
 
     # --- Vector DB ---
     QDRANT_URL: str = "http://localhost:6333"
+    QDRANT_API_KEY: str = ""
 
     # --- Observability ---
     LANGFUSE_PUBLIC_KEY: str = ""
