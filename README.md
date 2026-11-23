@@ -1,192 +1,294 @@
 # Multi-Agent Job & Resume Intelligence System
 
-> **Status: Phase 4 (RAG) core complete.** All 8 agent graph nodes
-> (Phase 3) are built and verified; Recommendation and Interview Prep now
-> ground their output in a curated, retrieved knowledge base instead of
-> relying purely on LLM training knowledge. Resume Optimization (optional,
-> user-triggered) remains a separate Phase 6 feature.
+An AI-powered career intelligence platform that analyzes resumes against job descriptions, identifies skill gaps, evaluates job compatibility, generates personalized recommendations, and creates tailored resumes using a multi-agent AI workflow.
 
-## Project Overview
+**Live Demo:** https://multi-agent-carrer-ai.vercel.app  
+**Backend API:** https://multi-agent-carrer-ai.onrender.com  
+**API Documentation:** https://multi-agent-carrer-ai.onrender.com/docs
 
-A multi-agent Generative AI application that analyzes a candidate's resume
-against a job description and produces an explainable career analysis:
-skill-gap breakdown, ATS compatibility, experience/project relevance, an
-overall match score, personalized recommendations grounded in retrieved
-reference material, interview questions, and (Phase 6) optional resume
-optimization.
+---
 
-Built as a portfolio project demonstrating production-oriented GenAI
-engineering: multi-agent orchestration (LangGraph), retrieval-augmented
-generation (Qdrant hybrid search), structured LLM outputs, observability
-(Langfuse, Phase 8), and a real evaluation methodology (Phase 7) — not
-just "call an LLM API."
+## Overview
 
-## Architecture (current)
+Multi-Agent Career AI is a full-stack Generative AI application built using specialized AI agents coordinated through LangGraph.
 
+Instead of relying on a single LLM prompt, the application distributes resume and job-description analysis across specialized agents. Their outputs are combined to produce an explainable career analysis and actionable recommendations.
+
+The platform also supports user-triggered resume optimization, saved tailored resume versions, and PDF generation.
+
+## Key Features
+
+- **Resume Analysis:** Upload and extract information from resumes.
+- **Job Description Analysis:** Extract job titles, required skills, experience, and qualifications.
+- **Multi-Agent Orchestration:** Coordinate specialized AI agents using LangGraph.
+- **Skill Gap Analysis:** Identify matching and missing technical skills.
+- **ATS Compatibility Analysis:** Estimate ATS compatibility using job-related keyword analysis.
+- **Experience Analysis:** Evaluate the relevance of projects and professional experience.
+- **Job Match Scoring:** Calculate a weighted match score using deterministic scoring logic.
+- **AI Recommendations:** Generate personalized recommendations grounded in retrieved reference material.
+- **Interview Preparation:** Generate role-relevant interview questions.
+- **Resume Tailoring:** Optimize resume content for a selected job description.
+- **Saved Resume Versions:** Save and manage multiple tailored resume versions.
+- **PDF Export:** Download generated tailored resumes as PDF files.
+
+## System Architecture
+
+The application follows a multi-agent architecture with parallel execution and retrieval-augmented generation.
+
+```mermaid
+flowchart TD
+    A[React Frontend] --> B[FastAPI Backend]
+    B --> C[LangGraph Orchestrator]
+
+    C --> D[Resume Analyzer]
+    C --> E[Job Description Analyzer]
+
+    D --> F[Skill Gap Analyzer]
+    E --> F
+
+    F --> G[ATS Analysis]
+    F --> H[Experience Analysis]
+
+    G --> I[Matching Agent]
+    H --> I
+
+    I --> J[Recommendation Agent]
+    I --> K[Interview Preparation Agent]
+
+    J --> L[Qdrant + BM25 Hybrid Retrieval]
+    K --> L
+
+    J --> M[Analysis Results]
+    K --> M
+
+    M --> N[PostgreSQL]
+
+    B --> O[Resume Optimization]
+    O --> P[Saved Resume Versions]
+    P --> Q[PDF Generation]
 ```
-React Frontend (Phase 5) → FastAPI Backend → LangGraph Orchestrator
 
-START --> resume_analyzer --\
-START --> jd_analyzer -------> skill_gap --> ats_analysis ---------\
-                                          \-> experience_analysis --> matching --> recommendation --------\
-                                                                                \-> interview_prep --------> END
-                                                                                        |            |
-                                                                                        v            v
-                                                                            [RAG: Qdrant + BM25 hybrid retrieval]
+### Multi-Agent Workflow
 
-PostgreSQL (every agent's result, as JSONB)
-```
+The analysis pipeline contains eight specialized graph nodes:
 
-Three genuine parallel fan-outs: Resume+JD (from START), ATS+Experience
-(from skill_gap), Recommendation+Interview Prep (from matching).
-**Matching** computes its score deterministically (zero LLM calls — see
-`app/services/matching_scorer.py`), with one LLM call only for a
-narrative explanation of its own already-computed numbers.
+1. **Resume Analyzer:** Extracts structured information from the candidate's resume.
+2. **Job Description Analyzer:** Extracts job requirements and relevant skills.
+3. **Skill Gap Analyzer:** Compares candidate skills against job requirements.
+4. **ATS Analysis Agent:** Estimates ATS compatibility.
+5. **Experience Analysis Agent:** Evaluates experience and project relevance.
+6. **Matching Agent:** Calculates an overall job compatibility score and generates its explanation.
+7. **Recommendation Agent:** Generates personalized career improvement recommendations.
+8. **Interview Preparation Agent:** Generates relevant interview preparation questions.
 
-**Recommendation and Interview Prep** (Phase 4) now retrieve relevant
-chunks from a curated knowledge base — skill/technology reference docs,
-interview question patterns, and general role-requirement context — via
-hybrid (dense + keyword) search, before generating their output. Retrieved
-role-requirement context is explicitly labeled in-prompt as *general
-industry context*, never usable to invent a gap beyond what
-`skill_gap_result` already detected.
+The workflow uses parallel execution for independent analysis tasks to improve efficiency.
 
-## Tech Stack
+## Retrieval-Augmented Generation (RAG)
 
-- **Backend:** Python, FastAPI, Pydantic, SQLAlchemy, Alembic
-- **Agents/Orchestration:** LangGraph
-- **LLM Provider:** Google Gemini (`gemini-2.5-flash-lite`) via the
-  `google-genai` SDK, abstracted behind `LLMProvider`
-- **Embeddings:** Gemini (`gemini-embedding-2`) — chosen over a local
-  model specifically to avoid the heavy `torch`/`sentence-transformers`
-  dependency stack on constrained hardware (16GB RAM, no GPU)
-- **Vector DB:** Qdrant
-- **Hybrid retrieval:** Qdrant (dense) + `rank-bm25` (keyword), fused via
-  reciprocal rank fusion — no reranking stage (deliberately skipped;
-  see Phase 4 design notes)
-- **Database:** PostgreSQL
-- **Document processing:** PyMuPDF (PDF), python-docx (DOCX), Tesseract
-  OCR (scanned PDF fallback)
-- **Frontend:** React, TypeScript, Tailwind CSS (Phase 5)
-- **Observability:** Langfuse (Phase 8)
-- **Deployment:** Docker, Docker Compose
+The recommendation and interview preparation agents use a curated knowledge base to ground their outputs.
 
-## Local Development Setup
+The retrieval pipeline includes:
 
-Follow these in order:
-1. [`docs/PHASE_1_SETUP.md`](docs/PHASE_1_SETUP.md)
-2. [`docs/PHASE_2_SETUP.md`](docs/PHASE_2_SETUP.md)
-3. [`docs/PHASE_3_SETUP.md`](docs/PHASE_3_SETUP.md)
-4. [`docs/PHASE_4_SETUP.md`](docs/PHASE_4_SETUP.md) — Qdrant ingestion,
-   hybrid retrieval, RAG-grounded agent verification
+- Gemini embeddings
+- Qdrant vector search
+- BM25 keyword retrieval
+- Reciprocal Rank Fusion (RRF)
+
+This combines semantic and keyword-based retrieval to provide relevant context to the agents.
+
+## Technology Stack
+
+| Category | Technologies |
+|---|---|
+| Backend | Python, FastAPI |
+| Frontend | React, TypeScript, Tailwind CSS, Vite |
+| AI Orchestration | LangGraph |
+| LLM | Google Gemini |
+| Embeddings | Gemini Embeddings |
+| Vector Database | Qdrant |
+| Retrieval | BM25, Hybrid Search, RRF |
+| Database | PostgreSQL |
+| ORM | SQLAlchemy |
+| Migrations | Alembic |
+| Document Processing | PyMuPDF, python-docx, Tesseract OCR |
+| PDF Generation | ReportLab |
+| Deployment | Render, Vercel |
+| Containerization | Docker, Docker Compose |
 
 ## Project Structure
 
-```
+```text
 multi-agent-career-ai/
+│
 ├── backend/
 │   ├── app/
-│   │   ├── agents/         # 8 LangGraph nodes + orchestrator + prompts/
-│   │   ├── api/routes/     # health, resumes, jobs, analysis
-│   │   ├── core/           # config, logging, exceptions
-│   │   ├── db/             # SQLAlchemy engine/session/base
-│   │   ├── models/         # ORM models (one result table per agent)
-│   │   ├── rag/            # chunking, embeddings, vector_store, retriever,
-│   │   │                   # ingest.py (standalone script), knowledge_base.py
-│   │   ├── schemas/        # Pydantic request/response + agent I/O contracts
-│   │   ├── services/       # document processing, llm/ provider abstraction,
-│   │   │                   # matching_scorer.py (deterministic scoring)
-│   │   ├── evaluation/     # Phase 7: eval scripts
-│   │   └── main.py
+│   │   ├── agents/
+│   │   ├── api/
+│   │   │   └── routes/
+│   │   ├── core/
+│   │   ├── db/
+│   │   ├── models/
+│   │   ├── rag/
+│   │   ├── schemas/
+│   │   └── services/
 │   ├── tests/
-│   ├── migrations/         # Alembic migrations (0001-0007)
+│   ├── migrations/
 │   └── requirements.txt
-├── frontend/                # Phase 5
+│
+├── frontend/
+│   └── src/
+│
 ├── data/
-│   ├── resumes/               # git-ignored content
-│   ├── job_descriptions/      # git-ignored content
-│   └── knowledge_base/        # RAG source content (committed - it's
-│       ├── skills/             # reference material, not PII)
-│       ├── interview_questions/
-│       └── role_requirements/
-├── evaluation/               # eval datasets + results (Phase 7)
-├── docker/
+│   └── knowledge_base/
+│
 ├── docs/
-├── .env.example
+├── evaluation/
+├── docker/
+├── Dockerfile
 ├── docker-compose.yml
+├── .env.example
 └── README.md
 ```
 
-## Development Phases
+## Deployment Architecture
 
-- [x] Phase 0 — Architecture design
-- [x] Phase 1 — Foundation
-- [x] Phase 2 — Document processing
-- [x] Phase 3 — Agent system (all 8 nodes)
-- [x] Phase 4 — RAG (hybrid retrieval, grounding Recommendation + Interview
-      Prep; reranking explicitly deferred, resume_sources DB persistence
-      explicitly deferred — see Limitations)
-- [ ] Phase 5 — Frontend ← **next**
-- [ ] Phase 6 — Resume optimization (optional, user-triggered)
-- [ ] Phase 7 — Evaluation
-- [ ] Phase 8 — Observability
-- [ ] Phase 9 — Testing
-- [ ] Phase 10 — Deployment
+The application is deployed using separate cloud services:
 
-## Key Engineering Decisions (with rationale)
+| Component | Deployment Platform |
+|---|---|
+| React Frontend | Vercel |
+| FastAPI Backend | Render |
+| PostgreSQL Database | Render PostgreSQL |
+| Vector Database | Qdrant Cloud |
+| LLM Provider | Google Gemini |
 
-- **Synchronous SQLAlchemy, not async** — the real bottleneck is LLM call
-  latency, not database I/O.
-- **LLM provider abstraction from day one** — agents depend on
-  `LLMProvider`, never a specific SDK.
-- **Gemini's `response_schema` rejects Pydantic default values** — every
-  Gemini-facing schema uses required fields only (discovered via a real
-  `ValueError` during development).
-- **Not every "agent" needs an LLM call** — Matching's score is a
-  deterministic weighted formula; only its narrative is LLM-generated.
-- **Gemini embeddings over a local model** — avoids `torch`/
-  `sentence-transformers` on hardware that can't comfortably run them;
-  the same reasoning that pushed local LLM inference to a cloud API back
-  in Phase 0 applies equally to embeddings.
-- **Hybrid retrieval without reranking** — a cross-encoder reranker needs
-  the same heavy dependency stack just avoided for embeddings, and a
-  small curated knowledge base (tens of documents) doesn't clearly need
-  it. Documented as a explicit scope decision, not a silent omission —
-  easy to add later if retrieval quality ever demands it.
-- **Role-requirement RAG context is explicitly labeled as general
-  industry context, in-prompt** — prevents the exact fabrication risk RAG
-  could otherwise introduce: using generic "what a GenAI Engineer
-  typically needs" reference material to invent a gap the specific JD
-  never actually required.
-- **Shared chunk-ID generation between ingestion and retrieval** — both
-  paths route through one function (`app/rag/knowledge_base.py`)
-  specifically to guarantee dense (Qdrant) and BM25 results for the same
-  underlying chunk are recognized as the same chunk during fusion — a bug
-  class caught and eliminated by design, not by testing after the fact.
-- **`.get(key, default)` for all LangGraph state reads** — a field only
-  exists once some node actually returns it during that run.
+**Live Application:**  
+https://multi-agent-carrer-ai.vercel.app
 
-## Limitations (living section)
+**Backend API Documentation:**  
+https://multi-agent-carrer-ai.onrender.com/docs
 
-- **Reranking is not implemented** — hybrid (dense + BM25) retrieval only,
-  by deliberate choice given hardware constraints and a small knowledge
-  base. Worth revisiting if retrieval precision ever becomes a measured
-  problem in Phase 7's evaluation.
-- **`recommendation_sources`/`interview_sources` are only returned on the
-  `POST /api/analysis` response, not yet persisted to the database** —
-  `GET /api/analysis/{id}` returns empty lists for these two fields for
-  now. The actual recommendation/interview content is fully persisted
-  either way; only the source-attribution metadata isn't yet.
-- **Knowledge base is intentionally narrow (v1 scope)**: skill/tech
-  reference docs, an interview question bank, and role-requirement
-  context for a handful of common role archetypes — not resume
-  best-practice docs (deferred to Phase 6) or a broad library of real job
-  descriptions.
-- `education_match` and `domain_match` in the Matching Agent use shallow
-  keyword-overlap heuristics — documented as the weakest, lowest-weighted
-  sub-scores.
-- The ATS score is explicitly an LLM-based heuristic estimate, stated
-  directly in every response via `ats_result.methodology_note`.
-- No overstated claims about match-score validity or evaluation results
-  not backed by actual experiments (Phase 7 will add real measured
-  metrics).
+## Local Development
+
+### Prerequisites
+
+- Python 3.12
+- Node.js and npm
+- Docker Desktop
+- Google Gemini API key
+- Qdrant instance
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Ujjawal-22/multi-agent-carrer-AI.git
+
+cd multi-agent-carrer-AI
+```
+
+### 2. Configure environment variables
+
+Copy the example environment file:
+
+```bash
+copy .env.example .env
+```
+
+Configure the required database, Gemini, and Qdrant settings in `.env`.
+
+Never commit your actual `.env` file or API credentials.
+
+### 3. Start backend infrastructure
+
+```bash
+docker compose up -d postgres qdrant
+```
+
+### 4. Start the backend
+
+```bash
+cd backend
+
+python -m venv my_env
+```
+
+Activate the environment on Windows:
+
+```powershell
+.\my_env\Scripts\Activate.ps1
+```
+
+Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+Start FastAPI:
+
+```bash
+uvicorn app.main:app --reload
+```
+
+Backend documentation:
+
+http://localhost:8000/docs
+
+### 5. Start the frontend
+
+Open another terminal:
+
+```bash
+cd frontend
+
+npm install
+
+npm run dev
+```
+
+Open the local frontend URL printed by Vite in your terminal.
+
+For the complete setup and phase-specific documentation, refer to the files inside the `docs/` directory.
+
+## Engineering Decisions
+
+Some important architectural decisions include:
+
+- **LangGraph orchestration:** Separates responsibilities across specialized agents and supports parallel execution.
+- **Deterministic matching score:** Calculates the numerical match score using weighted logic rather than asking an LLM to invent a score.
+- **LLM provider abstraction:** Keeps agent logic separate from the underlying model provider.
+- **Hybrid retrieval:** Combines semantic and keyword search for knowledge retrieval.
+- **Structured LLM outputs:** Uses defined schemas to keep agent responses consistent.
+- **PostgreSQL persistence:** Stores analysis results and saved resume versions.
+- **Docker-based deployment:** Provides a reproducible backend deployment environment.
+
+## Current Limitations
+
+- ATS compatibility is an AI-based heuristic estimate, not a guarantee of passing an actual ATS.
+- Hybrid retrieval currently uses dense and BM25 search without a cross-encoder reranking stage.
+- Some matching sub-scores, including education and domain relevance, use relatively simple keyword-overlap heuristics.
+- Retrieval source-attribution metadata is not yet persisted for every analysis response.
+- The curated knowledge base has limited role coverage.
+
+## Future Improvements
+
+- Expand the curated knowledge base across more job roles and industries.
+- Introduce retrieval evaluation and optional reranking.
+- Improve matching quality through benchmark datasets and measured evaluation.
+- Expand test coverage and production monitoring.
+- Improve resume formatting and tailoring controls.
+
+## Author
+
+**Ujjawal Srivastava**
+
+B.Tech – Computer Science & Engineering
+
+**Interests:** Generative AI, Agentic AI, Machine Learning, Computer Vision, and Multi-Agent Systems.
+
+- GitHub: https://github.com/Ujjawal-22
+- LinkedIn: https://www.linkedin.com/in/ujjawal-srivastava22
+
+---
+
+*Built as a practical Generative AI engineering project demonstrating multi-agent orchestration, RAG, structured LLM outputs, full-stack development, and cloud deployment.*
